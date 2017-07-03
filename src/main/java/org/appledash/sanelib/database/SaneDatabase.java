@@ -2,7 +2,6 @@ package org.appledash.sanelib.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.bukkit.configuration.ConfigurationSection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -10,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.LogManager;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
@@ -18,19 +17,20 @@ import java.util.logging.Logger;
  * Blackjack is still best pony.
  */
 public class SaneDatabase {
-    public static final Logger LOGGER = LogManager.getLogManager().getLogger("SaneDatabase");
+    public static final Logger LOGGER = Logger.getLogger("SaneDatabase");
     private HikariDataSource hikariDataSource;
     private ThreadCheckDatabaseConnection threadCheckDatabaseConnection;
     private List<ThreadRunDatabaseOperation> dbOpThreads = new ArrayList<>();
     private Queue<Runnable> databaseOperations = new ConcurrentLinkedQueue<>();
+    public AtomicInteger openTransactions = new AtomicInteger(0);
 
-    public SaneDatabase(ConfigurationSection config) {
-        initDataSource(config);
+    public SaneDatabase(DatabaseCredentials credentials) {
+        initDataSource(credentials);
         threadCheckDatabaseConnection = new ThreadCheckDatabaseConnection(hikariDataSource);
         threadCheckDatabaseConnection.start();
 
         for (int i = 0; i < 4; i++) {
-            ThreadRunDatabaseOperation threadRunDatabaseOperation = new ThreadRunDatabaseOperation(databaseOperations);
+            ThreadRunDatabaseOperation threadRunDatabaseOperation = new ThreadRunDatabaseOperation(this, databaseOperations);
             threadRunDatabaseOperation.start();
             this.dbOpThreads.add(threadRunDatabaseOperation);
         }
@@ -42,6 +42,7 @@ public class SaneDatabase {
         if (hikariDataSource != null) {
             threadCheckDatabaseConnection.abort();
             for (ThreadRunDatabaseOperation threadRunDatabaseOperation : this.dbOpThreads) {
+                threadRunDatabaseOperation.interrupt();
                 threadRunDatabaseOperation.abort();
             }
             LOGGER.info("Closing Hikari data source.");
@@ -50,23 +51,48 @@ public class SaneDatabase {
         }
     }
 
-    private void initDataSource(ConfigurationSection configuration) {
+    public boolean areAllTransactionsDone() {
+        return this.openTransactions.get() == 0;
+    }
+
+    public boolean isFinished() {
+        return this.dbOpThreads.stream().allMatch(t -> t.getState() == Thread.State.TERMINATED);
+    }
+
+    private void initDataSource(DatabaseCredentials configuration) {
         if (hikariDataSource != null) {
             throw new IllegalStateException("Cannot re-initialize data source!");
         }
 
         HikariConfig config = new HikariConfig();
-        config.setMaximumPoolSize(configuration.getInt("database.pool_size", 8));
+        config.setMaximumPoolSize(configuration.getPoolSize());
+        // config.addDataSourceProperty("serverName", configuration.getHostname());
+        // config.addDataSourceProperty("databaseName", configuration.getDatabaseName());
+        // config.addDataSourceProperty("portNumber", configuration.getPort());
+        config.addDataSourceProperty("user", configuration.getUsername());
+        config.addDataSourceProperty("password", configuration.getPassword());
+        config.setConnectionTimeout(configuration.getConnectionTimeout());
+        config.setIdleTimeout(configuration.getIdleTimeout());
+        config.setMaxLifetime(configuration.getMaxLifetime());
 
-        config.setDataSourceClassName("org.postgresql.ds.PGSimpleDataSource");
-        config.addDataSourceProperty("serverName", configuration.get("host"));
-        config.addDataSourceProperty("databaseName", configuration.get("database"));
-        config.addDataSourceProperty("portNumber", configuration.get("port", 0));
-        config.addDataSourceProperty("user", configuration.get("username"));
-        config.addDataSourceProperty("password", configuration.get("password"));
-        config.setConnectionTimeout(configuration.getInt("connection_timeout", 1500));
-        config.setIdleTimeout(configuration.getInt("idle_timeout", (60 * 5) * 1000));
-        config.setIdleTimeout(configuration.getInt("max_lifetime", (60 * 30) * 1000));
+        config.setJdbcUrl(configuration.getJDBCURL());
+
+        if (configuration.getDatabaseType().equalsIgnoreCase("postgres")) {
+            // config.setDataSourceClassName(org.postgresql.ds.PGSimpleDataSource.class.getName());
+            try {
+                Class.forName(org.postgresql.ds.PGSimpleDataSource.class.getName());
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        } else {
+            // config.setDataSourceClassName(com.mysql.cj.jdbc.MysqlDataSource.class.getName());
+            try {
+                Class.forName(com.mysql.cj.jdbc.MysqlDataSource.class.getName());
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
         hikariDataSource = new HikariDataSource(config);
     }
 

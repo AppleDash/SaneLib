@@ -8,25 +8,30 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Blackjack is still best pony.
  */
 public class ThreadRunDatabaseOperation extends Thread {
+    private final SaneDatabase saneDatabase;
     private final Queue<Runnable> runnables;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
-    public ThreadRunDatabaseOperation(Queue<Runnable> runnables) {
+    public ThreadRunDatabaseOperation(SaneDatabase saneDatabase, Queue<Runnable> runnables) {
+        this.saneDatabase = saneDatabase;
         this.runnables = runnables;
     }
 
     @Override
     public void run() {
         running.set(true);
-        while (running.get()) {
+        while (running.get() && !interrupted()) {
             Runnable r = runnables.poll();
 
             if (r != null) {
+                this.saneDatabase.openTransactions.incrementAndGet();
                 try {
                     r.run();
                 } catch (Exception e) {
                     SaneDatabase.LOGGER.severe("Exception occured running a database operation!");
                     e.printStackTrace();
+                } finally {
+                    this.saneDatabase.openTransactions.decrementAndGet();
                 }
             } else {
                 try {

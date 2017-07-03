@@ -52,7 +52,7 @@ public class MessageUtils {
         }
     }
 
-    public String indexedFormat(String fmt, Object... arguments) {
+    public static String indexedFormat(String fmt, Object... arguments) {
         Matcher m = Pattern.compile("\\{([0-9]+)(:[^}]+)?\\}").matcher(fmt);
         StringBuffer formatted = new StringBuffer();
 
