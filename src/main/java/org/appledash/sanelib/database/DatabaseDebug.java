@@ -3,7 +3,6 @@ package org.appledash.sanelib.database;
 import java.sql.PreparedStatement;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
@@ -11,23 +10,29 @@ import java.util.logging.Logger;
  * Blackjack is still best pony.
  */
 public class DatabaseDebug {
-    private static final Logger LOGGER = LogManager.getLogManager().getLogger("DatabaseDebug");
-    private static final Map<String, Long> debugs = new ConcurrentHashMap<>();
+    private static final Logger LOGGER = Logger.getLogger("DatabaseDebug");
+    private static final Map<Thread, Map<String, Long>> debugs = new ConcurrentHashMap<>();
 
     public synchronized static void startDebug(String tag) {
-        if (debugs.containsKey(tag.toLowerCase())) {
+        Thread thread = Thread.currentThread();
+        Map<String, Long> threadLocalDebugs = debugs.computeIfAbsent(thread, t -> new ConcurrentHashMap<>());
+
+        if (threadLocalDebugs.containsKey(tag.toLowerCase())) {
             throw new IllegalStateException("Cannot start debugging when we're already debugging this tag!");
         }
 
-        debugs.put(tag.toLowerCase(), System.currentTimeMillis());
+        threadLocalDebugs.put(tag.toLowerCase(), System.currentTimeMillis());
     }
 
     public synchronized static void finishDebug(String tag) {
-        if (!debugs.containsKey(tag.toLowerCase())) {
+        Thread thread = Thread.currentThread();
+        Map<String, Long> threadLocalDebugs = debugs.computeIfAbsent(thread, t -> new ConcurrentHashMap<>());
+
+        if (!threadLocalDebugs.containsKey(tag.toLowerCase())) {
             throw new IllegalStateException("Cannot finish debugging when we never started debugging this tag!");
         }
 
-        long startTime = debugs.remove(tag.toLowerCase());
+        long startTime = threadLocalDebugs.remove(tag.toLowerCase());
         long delta = System.currentTimeMillis() - startTime;
 
         LOGGER.info("Database call " + tag + " finished in " + delta + "ms.");

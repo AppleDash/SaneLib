@@ -17,11 +17,11 @@ import java.util.regex.Pattern;
  * Created by AppleDash on 8/5/2016.
  * Blackjack is still best pony.
  */
-public class I18n {
+public class I18nYamlBacked implements II18n {
     private final Map<String, String> translations = new HashMap<>();
     private final File translationsFile;
 
-    public I18n(File translationsFile) {
+    public I18nYamlBacked(File translationsFile) {
         this.translationsFile = translationsFile;
     }
 
