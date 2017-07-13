@@ -18,6 +18,11 @@ public class DatabaseCredentials {
 
     public DatabaseCredentials(String databaseType, String hostname, int port, String username, String password, String databaseName, String tablePrefix, boolean useSsl) {
         this.databaseType = databaseType;
+
+        if (!this.databaseType.equalsIgnoreCase("postgresql") && !this.databaseType.equalsIgnoreCase("mysql")) {
+            throw new IllegalArgumentException("Database type must be either postgresql or mysql.");
+        }
+
         this.hostname = hostname;
         this.port = port;
         this.username = username;
@@ -42,7 +47,7 @@ public class DatabaseCredentials {
     }
 
     public String getJDBCURL() {
-        if (this.databaseType.equalsIgnoreCase("postgres")) {
+        if (this.databaseType.equalsIgnoreCase("postgresql")) {
             return String.format("jdbc:postgres://%s:%s/%s", hostname, port, databaseName);
         }
 
