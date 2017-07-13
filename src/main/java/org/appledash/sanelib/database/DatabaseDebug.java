@@ -10,10 +10,15 @@ import java.util.logging.Logger;
  * Blackjack is still best pony.
  */
 public class DatabaseDebug {
+    private static boolean enabled = false;
     private static final Logger LOGGER = Logger.getLogger("DatabaseDebug");
     private static final Map<Thread, Map<String, Long>> debugs = new ConcurrentHashMap<>();
 
     public synchronized static void startDebug(String tag) {
+        if (!enabled) {
+            return;
+        }
+
         Thread thread = Thread.currentThread();
         Map<String, Long> threadLocalDebugs = debugs.computeIfAbsent(thread, t -> new ConcurrentHashMap<>());
 
@@ -25,6 +30,10 @@ public class DatabaseDebug {
     }
 
     public synchronized static void finishDebug(String tag) {
+        if (!enabled) {
+            return;
+        }
+
         Thread thread = Thread.currentThread();
         Map<String, Long> threadLocalDebugs = debugs.computeIfAbsent(thread, t -> new ConcurrentHashMap<>());
 
@@ -39,6 +48,14 @@ public class DatabaseDebug {
     }
 
     public static void printStatement(PreparedStatement ps) {
+        if (!enabled) {
+            return;
+        }
+
         LOGGER.info("Executing query: " + ps.toString());
+    }
+
+    public static void setEnabled(boolean enabled) {
+        DatabaseDebug.enabled = enabled;
     }
 }

@@ -1,5 +1,6 @@
 package org.appledash.sanelib;
 
+import org.appledash.sanelib.database.DatabaseDebug;
 import org.appledash.sanelib.messages.I18nYamlBacked;
 import org.appledash.sanelib.messages.II18n;
 import org.appledash.sanelib.messages.MessageUtils;
@@ -28,6 +29,7 @@ public abstract class SanePlugin extends JavaPlugin {
             this.getLogger().info("No translations file found at '" + translationsFile.getAbsolutePath() + "' (this is not an error) - using default identity I18n.");
         }
         this.messageUtils = new MessageUtils(this, this.getConfig().getString("chat.prefix", this.getName()));
+        DatabaseDebug.setEnabled(this.getConfig().getBoolean("debug", false));
     }
 
     public final II18n getI18n() {
