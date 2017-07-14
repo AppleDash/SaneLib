@@ -34,6 +34,14 @@ public class DatabaseCredentials {
         queryTimeout = 5000;
     }
 
+    public DatabaseCredentials(String databaseType, String hostname, int port, String username, String password, String databaseName) {
+        this(databaseType, hostname, port, username, password, databaseName, "", false);
+    }
+
+    public DatabaseCredentials(String databaseType, String hostname, String username, String password, String databaseName) {
+        this(databaseType, hostname, databaseType.equalsIgnoreCase("mysql") ? 3386 : 5432, username, password, databaseName);
+    }
+
     public String getUsername() {
         return username;
     }
@@ -48,7 +56,7 @@ public class DatabaseCredentials {
 
     public String getJDBCURL() {
         if (this.databaseType.equalsIgnoreCase("postgresql")) {
-            return String.format("jdbc:postgres://%s:%s/%s", hostname, port, databaseName);
+            return String.format("jdbc:postgresql://%s:%s/%s", hostname, port, databaseName);
         }
 
         return String.format("jdbc:mysql://%s:%d/%s?useSSL=%s&serverTimezone=UTC", hostname, port, databaseName, useSsl);

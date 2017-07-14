@@ -77,7 +77,8 @@ public class SaneDatabase {
 
         config.setJdbcUrl(configuration.getJDBCURL());
 
-        if (configuration.getDatabaseType().equalsIgnoreCase("postgres")) {
+        // Trust me, I am engineer!
+        if (configuration.getDatabaseType().equalsIgnoreCase("postgresql")) {
             // config.setDataSourceClassName(org.postgresql.ds.PGSimpleDataSource.class.getName());
             try {
                 Class.forName(org.postgresql.ds.PGSimpleDataSource.class.getName());
