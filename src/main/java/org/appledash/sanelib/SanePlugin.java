@@ -26,6 +26,12 @@ public abstract class SanePlugin extends JavaPlugin {
             this.getDataFolder().mkdirs();
         }
 
+        File configFile = new File(getDataFolder(), "config.yml");
+
+        if (!configFile.exists()) {
+            this.saveDefaultConfig();
+        }
+
         File translationsFile = new File(this.getDataFolder(), "messages.yml");
         if (translationsFile.exists()) {
             I18nYamlBacked i18nYamlBacked = new I18nYamlBacked(translationsFile);
