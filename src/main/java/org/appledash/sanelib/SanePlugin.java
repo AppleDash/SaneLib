@@ -72,7 +72,7 @@ public abstract class SanePlugin extends JavaPlugin {
                         e.printStackTrace();;
                     }
                 }
-            }.runTaskLaterAsynchronously(this, 60000);
+            }.runTaskLaterAsynchronously(this, 20 * 60);
         }
     }
 
