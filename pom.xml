@@ -6,7 +6,7 @@
 
     <groupId>org.appledash</groupId>
     <artifactId>sanelib</artifactId>
-    <version>0.3.7-SNAPSHOT</version>
+    <version>0.4.0-SNAPSHOT</version>
 
     <repositories>
         <repository>
@@ -41,6 +41,14 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>6.0.6</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/junit/junit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -84,7 +92,7 @@
                 </executions>
                 <configuration>
                     <serverId>votuvo</serverId>
-                    <nexusUrl>https://nexus.votuvo.com/</nexusUrl>
+                    <nexusUrl>https://nexus.sw4t.net/</nexusUrl>
                     <skipStaging>true</skipStaging>
                 </configuration>
             </plugin>
@@ -94,7 +102,7 @@
     <distributionManagement>
         <snapshotRepository>
             <id>votuvo</id>
-            <url>https://nexus.votuvo.com/repository/maven-snapshots/</url>
+            <url>https://nexus.sw4t.net/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 </project>

@@ -4,7 +4,9 @@ import org.appledash.sanelib.database.DatabaseDebug;
 import org.appledash.sanelib.messages.I18nYamlBacked;
 import org.appledash.sanelib.messages.II18n;
 import org.appledash.sanelib.messages.MessageUtils;
+import org.appledash.sanelib.metrics.Metrics;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +58,22 @@ public abstract class SanePlugin extends JavaPlugin {
         }
         this.messageUtils = new MessageUtils(this, this.getConfig().getString("chat.prefix", this.getName()));
         DatabaseDebug.setEnabled(this.getConfig().getBoolean("debug", false));
+
+        if (this.getConfig().getBoolean("metrics", true)) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    Metrics metrics = new Metrics(SanePlugin.this);
+
+                    try {
+                        metrics.submitMetrics();
+                    } catch (IOException e) {
+                        SanePlugin.this.getLogger().warning("Failed to submit metrics!");
+                        e.printStackTrace();;
+                    }
+                }
+            }.runTaskLaterAsynchronously(this, 60000);
+        }
     }
 
     public final II18n getI18n() {

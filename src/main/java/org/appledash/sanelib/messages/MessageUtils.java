@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
  * Blackjack is still best pony.
  */
 public class MessageUtils {
+    public static final Pattern INDEXED_FORMAT_PATTERN = Pattern.compile("\\{([0-9]+)(:[^}]+)?\\}");
     private final SanePlugin plugin;
     private final String chatPrefix;
 
@@ -53,11 +54,11 @@ public class MessageUtils {
     }
 
     public static String indexedFormat(String fmt, Object... arguments) {
-        Matcher m = Pattern.compile("\\{([0-9]+)(:[^}]+)?\\}").matcher(fmt);
+        Matcher m = INDEXED_FORMAT_PATTERN.matcher(fmt);
         StringBuffer formatted = new StringBuffer();
 
         while (m.find()) {
-            int index = Integer.valueOf(m.group(1)) - 1;
+            int index = Integer.parseInt(m.group(1)) - 1;
 
             if (index > arguments.length - 1 || index < 0) {
                 throw new IllegalArgumentException("Index must be within the range of the given arguments.");
